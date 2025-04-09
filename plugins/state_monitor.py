@@ -3,6 +3,7 @@ Plugin to monitor state variables from the charge controller.
 """
 
 from math import nan
+import shutil
 
 # Third party imports
 from notifiers.slack import SlackSender
@@ -24,6 +25,7 @@ class StateMonitor(brokkr.pipeline.base.OutputStep):
         ping_max=3,
         channel=None,
         key_file=None,
+        low_pi_space=5e9,
         **output_step_kwargs,
         ):
         """
@@ -65,6 +67,7 @@ class StateMonitor(brokkr.pipeline.base.OutputStep):
         self.ping_max = ping_max
         self.bad_ping = 0  # Track the number of bad pings
         self.sender = None  # Make sure we "initialize" the attribute
+        self.low_pi_space = low_pi_space
 
         sender_class = {"slack": SlackSender, "gchat": GoogleChatSender}[method]
         try:
@@ -182,7 +185,7 @@ class StateMonitor(brokkr.pipeline.base.OutputStep):
 
         """
         for check_fn in [
-                self.check_power,
+                self.check_pi_space,
                 self.check_ping,
                 self.check_sensor_drive,
                 self.check_battery_voltage,
@@ -194,6 +197,33 @@ class StateMonitor(brokkr.pipeline.base.OutputStep):
                     self.send_message(msg)
             except Exception as e:
                 self.log_error(input_data, e)
+
+    def check_pi_space(self, input_data):
+        """
+        Check the remaining space on backend Pi.
+
+        This will check to see how much space is remaining on a backend Pi.
+        If it falls below the value given by the class attribute `low_pi_space`,
+        send a message.
+
+        Parameters
+        ----------
+        input_data : Mapping[str, DataValue]
+            Same as argument of `execute`.
+
+        Returns
+        -------
+        str | None
+            Message to send depending on the check, or None if no message.
+
+        """
+
+        total, used, free = shutil.disk_usage("/")
+
+        if free < self.low_pi_space:
+            return f"Free space is low! Current {free/(2**30):.2f} GB; critical value:{self.low_pi_space/(2**30):.2f} GB."
+        else:
+            return None
 
     def check_power(self, input_data):
         """
