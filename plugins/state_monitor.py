@@ -26,7 +26,7 @@ class StateMonitor(brokkr.pipeline.base.OutputStep):
         ping_max=3,
         channel=None,
         key_file=None,
-        low_pi_space=5e9,
+        low_pi_space=5,
         **output_step_kwargs,
         ):
         """
@@ -68,7 +68,7 @@ class StateMonitor(brokkr.pipeline.base.OutputStep):
         self.ping_max = ping_max
         self.bad_ping = 0  # Track the number of bad pings
         self.sender = None  # Make sure we "initialize" the attribute
-        self.low_pi_space = low_pi_space
+        self.low_pi_space = low_pi_space*1000000000
 
         sender_class = {"slack": SlackSender, "gchat": GoogleChatSender}[method]
         try:
