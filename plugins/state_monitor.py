@@ -51,6 +51,9 @@ class StateMonitor(brokkr.pipeline.base.OutputStep):
             The chat channel in which to post notifications.
         key_file : str or pathlib.Path, optional
             The path to the file that contains the secret/webhook key for the given `method`.
+        low_pi_space: numeric, optional
+            Specifies the critical value, in gigabytes-ish, for hard drive space remaining
+            on the backend Pi.
         output_step_kwargs : **kwargs, optional
             Keyword arguments to pass to the OutputStep constructor.
 
@@ -185,7 +188,7 @@ class StateMonitor(brokkr.pipeline.base.OutputStep):
 
         """
         for check_fn in [
-                self.check_drive, 
+                self.check_drive,
                 self.check_pi_space,
                 self.check_ping,
                 self.check_power,
@@ -229,7 +232,7 @@ class StateMonitor(brokkr.pipeline.base.OutputStep):
             return None
 
     def check_drive(self, input_data):
-
+        """Check to see if the archive drive is available"""
         from brokkr.config.main import CONFIG
         import brokkr.utils.output
         drive_settings = CONFIG['steps']['science_binary_output']['drive_kwargs']
