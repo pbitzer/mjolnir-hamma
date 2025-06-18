@@ -12,6 +12,7 @@ from notifiers.google_chat import GoogleChatSender
 # Local imports
 import brokkr.pipeline.base
 import brokkr.pipeline.decode
+import brokkr.utils.output
 
 
 class StateMonitor(brokkr.pipeline.base.OutputStep):
@@ -173,7 +174,6 @@ class StateMonitor(brokkr.pipeline.base.OutputStep):
             self.logger.info(
                 "%s data: %r", pretty_name, data)
 
-
     def run_checks(self, input_data):
         """
         Run the monitoring checks and log/send messages for the results.
@@ -185,12 +185,15 @@ class StateMonitor(brokkr.pipeline.base.OutputStep):
 
         """
         for check_fn in [
+                self.check_drive, 
                 self.check_pi_space,
                 self.check_ping,
-                self.check_sensor_drive,
+                self.check_power,
                 self.check_battery_voltage,
-                ]:
+                self.check_sensor_drive,
+        ]:
             try:
+                # noinspection PyArgumentList
                 msg = check_fn(input_data)
                 if msg:
                     self.logger.info(msg)
@@ -222,6 +225,22 @@ class StateMonitor(brokkr.pipeline.base.OutputStep):
 
         if free < self.low_pi_space:
             return f"Free space is low! Current {free/(2**30):.2f} GB; critical value:{self.low_pi_space/(2**30):.2f} GB."
+        else:
+            return None
+
+    def check_drive(self, input_data):
+
+        from brokkr.config.main import CONFIG
+        import brokkr.utils.output
+        drive_settings = CONFIG['steps']['science_binary_output']['drive_kwargs']
+
+        avail_drives = brokkr.utils.output.find_drives(
+                 drive_settings['drive_glob'],
+                 '/dev/disk/by-label',
+        )
+
+        if not avail_drives:
+            return "No drives available."
         else:
             return None
 
