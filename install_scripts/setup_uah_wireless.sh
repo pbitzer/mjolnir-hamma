@@ -39,6 +39,9 @@ sudo cp $USB_PATH"/mjolnir-hamma/files/wpa_supplicant-wlan0.conf" /etc/wpa_suppl
 # Update the config file with the correct path to the certificate
 sudo sed -i "s%private_key=.*%private_key=\""$CERT_PATH"NSSTC-UAH-WIRELESS-$name.p12"\""%" "/etc/wpa_supplicant/wpa_supplicant-wlan0.conf"
 
+# Update the identity to use the hostname
+sudo sed -i -e "s/identity=\"bitzer.*/identity=\"`hostname`\"/g" /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
+
 echo "***** Don't forget to update private key password at /etc/wpa_supplicant/wpa_supplicant-wlan0.conf!"
 
 
